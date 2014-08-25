@@ -102,7 +102,7 @@ elseif(prefix_p("___",getsymbol_name(pat[item]))) then
                 push([first(loc2_t),second(loc2_t)],temp),
                 temp:append(temp,[[pat[item],[],(last(loc2_t))]]))
 )),
-arrange(pat,flatend(temp)))$
+arrange(pat,temp))$
 /*-----------------------------------------------------------*/
 arrange(pat,temp):=block([final:[],pat:delete(parse_string("___pivot"),pat)],for item in pat do 
                   (push(first(sublist(temp,lambda([x],first(x)=item))),final),temp:delete(item,temp)),(reverse(final)))$
