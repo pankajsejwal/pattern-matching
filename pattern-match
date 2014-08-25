@@ -1,15 +1,10 @@
 load(basic);
-
+/*-----------------------------------------------------------*/
 load("C:/Users/joker/Documents/Maxima-Docs/segment-new.lisp");
 /* Get segment from http://www.cs.berkeley.edu/~fateman/lisp/segment-new.lisp    */
 
 use_segment(true);    /* To enable segment*/
-/*-----------------------------------------------------------*/
-listcomplementt(k,l):=block([],map(lambda([x],k:delete(x,k)),[l]),k)$
-listcomplement(k,l):=block([temp:l,s:k],for i in temp do s:listcomplementt(s,i),s)$
-take(x,m,n):=block([temp:[]],part(x,makelist(i,i,m,n)))$
-init(lis):=block([lis:lis],take(lis,1,length(lis)-1))$
-/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------*/  
 prefix_p(seq1,seq2):=block(if(slength(string(seq1))<= slength(string(seq2)))
     then if(seq1="___") then (is(part(charlist(seq1),[1,3])=part(charlist(seq2),[1,3])))
      elseif(seq1="__") then 
@@ -32,7 +27,7 @@ else
 (  pop_temp:pop(pop1_stack1),
    if(length(last(pop_temp))>1) then 
             (push([pat[item],[last(last(pop_temp))]],pop_return),
-             push(append(init(pop_temp),[init(last(pop_temp))]),pop_return),    
+             push(append(init(pop_temp),[init(last(pop_temp))]),pop_return),   
              final:pop_return) else final:[]),(final))$
 /*-----------------------------------------------------------*/
 disect(pat,input):=block([pat:cons(___pivot,pat),temp_container:[],pat_subl,temp:[],loc1,loc2,loc3,container,loc1_t,loc2_t,loc1_t1,loc1_t2,pop1,pop1_stack:[],pop1_stack1:[]],
@@ -71,13 +66,15 @@ elseif(prefix_p("__",getsymbol_name(pat[item]))) then
           if(container#[]) then ( 
                            container:last(container),
                            pop1_stack1:[],
+                           temp:sublist(temp,lambda([x],x#[parse_string("___pivot"),[]])),
                            loc2_t:sublist_indices(temp,lambda([x],prefix_p("__",getsymbol_name(first(x)))or 
                                    prefix_p("___",getsymbol_name(first(x))))),
                            pop1_stack1:take(temp,last(loc2_t),length(temp)),
                            temp:take(temp,1,last(loc2_t-1)),
                            pop1_stack1:propagate2(pop1_stack1,pat,item),
-                           temp:append(temp,(pop1_stack1))
-                                 )
+                           pop1_stack1:sublist(pop1_stack1,lambda([x],x#[parse_string("___pivot"),[]])),
+                           temp:append(temp,pop1_stack1))
+
           else (loc2_t:pop(temp),
                 push([first(loc2_t),second(loc2_t)],temp),
                 temp:append(temp,[[pat[item],[first(last(loc2_t))],rest(last(loc2_t))]]))
@@ -91,51 +88,65 @@ elseif(prefix_p("___",getsymbol_name(pat[item]))) then
           if(container#[]) then ( 
                            container:last(container),
                            pop1_stack1:[],
+                           temp:sublist(temp,lambda([x],x#[parse_string("___pivot"),[]])),
                            loc2_t:sublist_indices(temp,lambda([x],prefix_p("__",getsymbol_name(first(x)))or 
                                    prefix_p("___",getsymbol_name(first(x))))),
                            pop1_stack1:take(temp,last(loc2_t),length(temp)),
                            temp:take(temp,1,last(loc2_t-1)),
                            pop1_stack1:propagate_3(pop1_stack1,pat,item),
-                           temp:append(temp,(pop1_stack1))
-                                 )
+                           temp:append(temp,(pop1_stack1)))
           else (loc2_t:pop(temp),
                 push([first(loc2_t),second(loc2_t)],temp),
                 temp:append(temp,[[pat[item],[],(last(loc2_t))]]))
-)),
-arrange(pat,temp))$
+)),temp:flatend(temp),
+ arrange(pat,sublist(temp,lambda([x],x#[parse_string("___pivot"),[]]))))$
+/*-----------------------------------------------------------*/
+flatend(temp):=sublist(map(lambda([x],if(length(x)>2) then 
+               [first(x),append(second(x),(last(x)))] else x),temp),lambda([x],first(x)#parse_string("___pivot")))$
 /*-----------------------------------------------------------*/
 arrange(pat,temp):=block([final:[],pat:delete(parse_string("___pivot"),pat)],for item in pat do 
                   (push(first(sublist(temp,lambda([x],first(x)=item))),final),temp:delete(item,temp)),(reverse(final)))$
 /*-----------------------------------------------------------*/
-propagate_3(pop1_stack1,pat,item):=block([final,pop_temp,pop_return:[],pop1_stack1:pop1_stack1,loc1_t,pat:pat,item:item,last_lis,temp1],
+propagate_3(pop1_stack1,pat,item):=block([last_lis_col:[],final,pop_temp,pop_return:[],
+           pop1_stack1:pop1_stack1,loc1_t,pat:pat,item:item,last_lis,temp1],
 
-if(length(pop1_stack1)>1) then 
+if(length(pop1_stack1)>1) then
        (loc1_t:copylist(first(init(pop1_stack1))),
        last_lis:flatten(map(last,pop1_stack1)),
+  for item in last_lis do
+         last_lis_col:append(last_lis_col,[apply(segment,[item])]),
   for i:2 thru length(pop1_stack1) do 
       pop1_stack1[i][2]:[last_lis[i-1]] ,
- 
   pop_return:append([first(loc1_t),second(loc1_t)],pop_return),
   pop_return:append(reverse(rest(pop1_stack1)),[pop_return]),
-  temp1:listcomplement(last_lis,flatten(map(last,rest(pop1_stack1)))),
+  last_lis_col:[],
+    for item in (map(last,rest(pop1_stack1))) do
+         last_lis_col:append(last_lis_col,[apply(segment,item)]),
+  temp1:listcomplement(last_lis,last_lis_col),
   pop_return:append(pop_return,[[pat[item],[],(temp1)]]),
   final:pop_return)
 else
-(  
-   pop_temp:pop(pop1_stack1),
+(  pop_temp:pop(pop1_stack1),
    push([pat[item],[],(last(pop_temp))],pop_return),
    push([first(pop_temp),second(pop_temp)],pop_return),
-   final:pop_return),(final))$
+   final:pop_return),final)$
 /*-----------------------------------------------------------*/
-propagate2(pop1_stack1,pat,item):=block([final,pop_temp,pop_return:[],pop1_stack1:pop1_stack1,loc1_t,pat:pat,item:item,last_lis,temp1],
+propagate2(pop1_stack1,pat,item):=block([last_lis_col:[],final,pop_temp,pop_return:[],pop1_stack1:pop1_stack1,
+                            loc1_t,pat:pat,item:item,last_lis,temp1],
 if(length(pop1_stack1)>1) then 
        (loc1_t:copylist(first(init(pop1_stack1))),
-       last_lis:flatten(map(last,pop1_stack1)),
+       last_lis:(map(last,pop1_stack1)),
+  for item in last_lis do
+         last_lis_col:append(last_lis_col,[apply(segment,item)]),
+  last_lis:last_lis_col, 
   for i:2 thru length(pop1_stack1) do 
-      pop1_stack1[i][2]:[last_lis[i-1]] ,  
+      (pop1_stack1[i][2]:[last_lis[i-1]]),
   pop_return:append([first(loc1_t),second(loc1_t)],pop_return),
   pop_return:append(reverse(rest(pop1_stack1)),[pop_return]),
-  temp1:listcomplement(last_lis,flatten(map(last,rest(pop1_stack1)))),
+  last_lis_col:[],
+    for item in (map(last,rest(pop1_stack1))) do
+         last_lis_col:append(last_lis_col,[apply(segment,item)]),
+  temp1:listcomplement(last_lis,last_lis_col),
   pop_return:append(pop_return,[[pat[item],[first(temp1)],rest(temp1)]]),
   final:pop_return)
 else
@@ -144,4 +155,4 @@ else
    push([pat[item],[first(last(pop_temp))],rest(last(pop_temp))],pop_return),
    push([first(pop_temp),second(pop_temp)],pop_return),
    final:pop_return),(final))$
-/*-----------------------------------------------------------*/  
+/*-----------------------------------------------------------*/
