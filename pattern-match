@@ -1,0 +1,142 @@
+load(basic);
+/*-----------------------------------------------------------*/
+listcomplementt(k,l):=block([],map(lambda([x],k:delete(x,k)),[l]),k)$
+listcomplement(k,l):=block([temp:l,s:k],for i in temp do s:listcomplementt(s,i),s)$
+take(x,m,n):=block([temp:[]],part(x,makelist(i,i,m,n)))$
+init(lis):=block([lis:lis],take(lis,1,length(lis)-1))$
+/*-----------------------------------------------------------*/
+prefix_p(seq1,seq2):=block(if(slength(string(seq1))<= slength(string(seq2)))
+    then if(seq1="___") then (is(part(charlist(seq1),[1,3])=part(charlist(seq2),[1,3])))
+     elseif(seq1="__") then 
+      (is(part(charlist(seq2),[1,2])=["_","_"]) and (if(slength(string(seq2))>2) then part(charlist(seq2),[3])#["_"]))
+     elseif(seq1="_") then is(first(charlist(seq2))="_") and (if(slength(string(seq2))>=2) then part(charlist(seq2),[2])#["_"]))$
+/*-----------------------------------------------------------*/
+getsymbol_name(sym):=substring(symbol_name(sym),2)$
+:lisp(defun $symbol_name(sym)(symbol-name sym))
+/*-----------------------------------------------------------*/
+propagate(pop1_stack1,pat,item):=block([final,pop_temp,pop_return:[],pop1_stack1:reverse(pop1_stack1),loc1_t,pat:pat,item:item],
+if(length(pop1_stack1)>1) then 
+       (loc1_t:copylist(first(init(pop1_stack1))),
+  for i:1 thru length(pop1_stack1)-1 do 
+      pop1_stack1[i][2]:[last(last(pop1_stack1[i+1]))] ,  
+  pop_return:append(reverse(pop1_stack1),pop_return),
+  pop_return:append(pop_return,[[pat[item],[last(last(loc1_t))]]]),
+  pop_return:substinpart(piece:[first(piece),second(piece),init(last(piece))],pop_return,1),
+  final:pop_return)
+else
+(  pop_temp:pop(pop1_stack1),
+   if(length(last(pop_temp))>1) then 
+            (push([pat[item],[last(last(pop_temp))]],pop_return),
+             push(append(init(pop_temp),[init(last(pop_temp))]),pop_return),    
+             final:pop_return) else final:[]),(final))$
+/*-----------------------------------------------------------*/
+disect(pat,input):=block([pat:cons(___pivot,pat),temp_container:[],pat_subl,temp:[],loc1,loc2,loc3,container,loc1_t,loc2_t,loc1_t1,loc1_t2,pop1,pop1_stack:[],pop1_stack1:[]],
+    container:sublist_indices(pat,lambda([x],prefix_p("_",getsymbol_name(x)))),
+    container1:sublist_indices(pat,lambda([x],prefix_p("__",getsymbol_name(x)) or prefix_p("___",getsymbol_name(x)))),
+    if(container#[] and container1=[] and last(container)=length(input)) then (
+       (for i:1 thru length(input) do temp:append(temp,[[pat[i],input[i]]])))
+else (  
+for item:1 thru length(pat) do
+if(prefix_p("_",getsymbol_name(pat[item]))) then
+(
+       if(item=1) then (push([pat[item],[first(input)],rest(input)],temp))
+       else ( container:sublist_indices(pat,lambda([x],prefix_p("_",getsymbol_name(x)))),
+              container:last(container),
+            if(length(input)=container) then 
+              (for i:1 thru length(input) do temp:append(temp,[[pat[i],input[i]]]))
+            else (
+              pat_subl:take(pat,1,item-1),
+              container:sublist_indices(pat_subl,lambda([x],prefix_p("__",getsymbol_name(x))or 
+                         prefix_p("___",getsymbol_name(x)))),
+         if(container#[]) then (container:last(container),
+           pop1_stack1:[],
+           loc1_t:sublist_indices(temp,lambda([x],prefix_p("__",getsymbol_name(first(x)))or 
+                  prefix_p("___",getsymbol_name(first(x))))),
+           pop1_stack1:take(temp,last(loc1_t),length(temp)),
+           temp:take(temp,1,last(loc1_t-1)),   
+           pop1_stack1:propagate(pop1_stack1,pat,item),
+           temp:append(temp,(pop1_stack1)))
+     )))
+
+elseif(prefix_p("__",getsymbol_name(pat[item]))) then
+   (if(item=1) then
+              push([pat[item],[first(input)],rest(input)],temp)
+   else ( pat_subl:take(pat,1,item-1),
+          container:sublist_indices(pat_subl,lambda([x],prefix_p("__",getsymbol_name(x))or prefix_p("___",getsymbol_name(x)))),
+          if(container#[]) then ( 
+                           container:last(container),
+                           pop1_stack1:[],
+                           loc2_t:sublist_indices(temp,lambda([x],prefix_p("__",getsymbol_name(first(x)))or 
+                                   prefix_p("___",getsymbol_name(first(x))))),
+                           pop1_stack1:take(temp,last(loc2_t),length(temp)),
+                           temp:take(temp,1,last(loc2_t-1)),
+                           pop1_stack1:propagate2(pop1_stack1,pat,item),
+                           temp:append(temp,(pop1_stack1))
+                                 )
+          else (loc2_t:pop(temp),
+                push([first(loc2_t),second(loc2_t)],temp),
+                temp:append(temp,[[pat[item],[first(last(loc2_t))],rest(last(loc2_t))]]))
+))
+elseif(prefix_p("___",getsymbol_name(pat[item]))) then
+   if(item=1) then
+              push([pat[item],[],input],temp)
+   else ( 
+          pat_subl:take(pat,1,item-1),
+          container:sublist_indices(pat_subl,lambda([x],prefix_p("__",getsymbol_name(x))or prefix_p("___",getsymbol_name(x)))),
+          if(container#[]) then ( 
+                           container:last(container),
+                           pop1_stack1:[],
+                           loc2_t:sublist_indices(temp,lambda([x],prefix_p("__",getsymbol_name(first(x)))or 
+                                   prefix_p("___",getsymbol_name(first(x))))),
+                           pop1_stack1:take(temp,last(loc2_t),length(temp)),
+                           temp:take(temp,1,last(loc2_t-1)),
+                           pop1_stack1:propagate_3(pop1_stack1,pat,item),
+                           temp:append(temp,(pop1_stack1))
+                                 )
+          else (loc2_t:pop(temp),
+                push([first(loc2_t),second(loc2_t)],temp),
+                temp:append(temp,[[pat[item],[],(last(loc2_t))]]))
+)),
+temp)$
+/*-----------------------------------------------------------*/
+arrange(pat,temp):=block([final:[],pat:delete(parse_string("___pivot"),pat)],for item in pat do 
+                  (push(first(sublist(temp,lambda([x],first(x)=item))),final),temp:delete(item,temp)),(reverse(final)))$
+/*-----------------------------------------------------------*/
+propagate_3(pop1_stack1,pat,item):=block([final,pop_temp,pop_return:[],pop1_stack1:pop1_stack1,loc1_t,pat:pat,item:item,last_lis,temp1],
+
+if(length(pop1_stack1)>1) then 
+       (loc1_t:copylist(first(init(pop1_stack1))),
+       last_lis:flatten(map(last,pop1_stack1)),
+  for i:2 thru length(pop1_stack1) do 
+      pop1_stack1[i][2]:[last_lis[i-1]] ,
+ 
+  pop_return:append([first(loc1_t),second(loc1_t)],pop_return),
+  pop_return:append(reverse(rest(pop1_stack1)),[pop_return]),
+  temp1:listcomplement(last_lis,flatten(map(last,rest(pop1_stack1)))),
+  pop_return:append(pop_return,[[pat[item],[],(temp1)]]),
+  final:pop_return)
+else
+(  
+   pop_temp:pop(pop1_stack1),
+   push([pat[item],[],(last(pop_temp))],pop_return),
+   push([first(pop_temp),second(pop_temp)],pop_return),
+   final:pop_return),(final))$
+/*-----------------------------------------------------------*/
+propagate2(pop1_stack1,pat,item):=block([final,pop_temp,pop_return:[],pop1_stack1:pop1_stack1,loc1_t,pat:pat,item:item,last_lis,temp1],
+if(length(pop1_stack1)>1) then 
+       (loc1_t:copylist(first(init(pop1_stack1))),
+       last_lis:flatten(map(last,pop1_stack1)),
+  for i:2 thru length(pop1_stack1) do 
+      pop1_stack1[i][2]:[last_lis[i-1]] ,  
+  pop_return:append([first(loc1_t),second(loc1_t)],pop_return),
+  pop_return:append(reverse(rest(pop1_stack1)),[pop_return]),
+  temp1:listcomplement(last_lis,flatten(map(last,rest(pop1_stack1)))),
+  pop_return:append(pop_return,[[pat[item],[first(temp1)],rest(temp1)]]),
+  final:pop_return)
+else
+(  
+   pop_temp:pop(pop1_stack1),
+   push([pat[item],[first(last(pop_temp))],rest(last(pop_temp))],pop_return),
+   push([first(pop_temp),second(pop_temp)],pop_return),
+   final:pop_return),(final))$
+/*-----------------------------------------------------------*/  
