@@ -1,4 +1,9 @@
 load(basic);
+
+load("C:/Users/joker/Documents/Maxima-Docs/segment-new.lisp");
+/* Get segment from http://www.cs.berkeley.edu/~fateman/lisp/segment-new.lisp    */
+
+use_segment(true);    /* To enable segment*/
 /*-----------------------------------------------------------*/
 listcomplementt(k,l):=block([],map(lambda([x],k:delete(x,k)),[l]),k)$
 listcomplement(k,l):=block([temp:l,s:k],for i in temp do s:listcomplementt(s,i),s)$
