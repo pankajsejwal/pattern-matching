@@ -3,6 +3,7 @@ perms:permutations([_a,_a1,__b,__b1,___c,___c1])$
 block([final:[]],for item in perms do print([item,"=",disect(item,[1,2,3,4,5,6,7,8,9])]))$
 
 /* One can check random entries corresponding to Mathematica */
+/*------------------------------------------------------------------------------------*/
 
 powst:powerset({_a,_b,__c,__d,___e,___f});
 
