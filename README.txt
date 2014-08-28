@@ -24,5 +24,12 @@ disect([___q,___e,___r,___s,___w,___t],[1,2,3,4,5]);
 => [[___q,[]],[___e,[]],[___r,[]],[___s,[]],[___w,[]],[___t,[],[1,2,3,4,5]]]
 
 
+For detailed explaination:
+
+https://drive.google.com/file/d/0B36DQjLI_-hxek5zX3V3MHMzLXc/edit?usp=sharing
+
+
+
+
 
 
