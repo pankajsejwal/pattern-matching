@@ -176,7 +176,7 @@ elseif(prefix_p("___",getsymbol_name(pat[item]))) then
                 temp:append(temp,[[pat[item],[],(last(loc2_t))]]))
 )),
  pop1_stack1:revert_mappings(inp_map,input),
- for item in pop1_stack1 do temp:subst(last(item),first(item),temp),temp:arrange(pat,temp)),temp )$
+ for item in pop1_stack1 do temp:subst(last(item),first(item),temp)),temp )$
  
 /*---------------------------------------------------------------------------------*/
 
