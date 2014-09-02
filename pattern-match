@@ -196,4 +196,78 @@ generate_mappings(lis):=block([temp:[]],for item in lis do push([item,gensym()],
 
 revert_mappings(lis,inp):=block([temp:[],col_sym:[]],col_sym:map(first,lis), 
                          for item:1 thru length(input) do push([input[item],col_sym[item]],temp),temp)$
+/*---------------------------------------------------------------------------*/
+
+pat_lists(patt,input):=block([out:[],final:[],symb,patt_temp1,patt_temp2,patt_sym:[],inpt_sym:[],
+        inpt_temp1,inpt_temp2,patt_st1:[],patt:patt,input:input,lis_pat,temp1,temp2],
+        lis_pat:sublist(patt,listp),
+        if length(lis_pat)=0 then disect(patt,input)
+        else (  patt_temp1:enum_positions(patt),
+                patt_temp1:reverse(sublist(patt_temp1,lambda([x],atom(first(x))=false))),
+                patt_temp2:sublist(patt_temp1,lambda([x],test_subl(x))), 
+                patt_temp2:map(first,patt_temp2),
+                for i in patt_temp2 do 
+                for item:1 thru length(i) do 
+                     if(atom(i[item])=false) then (symb:parse_string(concat("_",gensym())),
+                         push([i[item],symb],patt_sym)),
+                for item in patt_sym do patt_temp2:subst(last(item),first(item),patt_temp2),         
+
+                inpt_temp1:enum_positions(input),
+                inpt_temp1:reverse(sublist(inpt_temp1,lambda([x],atom(first(x))=false))),
+                inpt_temp2:sublist(inpt_temp1,lambda([x],test_subl(x))),
+                inpt_temp2:map(first,inpt_temp2),
+                for i in inpt_temp2 do 
+                for item:1 thru length(i) do 
+                     if(atom(i[item])=false) then (symb:gensym(),push([i[item],symb],inpt_sym)),
+                for item in inpt_sym do inpt_temp2:subst(last(item),first(item),inpt_temp2),
+                patt_sym:reverse(patt_sym),inpt_sym:reverse(inpt_sym),
+                if(sort(map(last,patt_temp1))=sort(map(last,inpt_temp1)))
+                then (
+                     for item:1 thru length(patt_sym) do (   
+                                 push(disect(first(patt_sym[item]),first(inpt_sym[item])),final)),
+                     for item:1 thru length(patt_temp2) do (  
+                                 push(disect(patt_temp2[item],inpt_temp2[item]),final)),
+                     for item in inpt_sym do inpt_temp2:subst(first(item),last(item),inpt_temp2))           
+),
+
+for item in patt_sym do final:subst(first(item),last(item),final),
+for item in inpt_sym do final:subst(first(item),last(item),final),
+
+for item:1 thru length(patt) do if(listp(patt[item])) then (
+                symb:parse_string(concat("_",gensym())),push([patt[item],symb],patt_sym),patt[item]:symb),
+/*print("patt_sym:",patt_sym,"inpt_sym:",inpt_sym),   */
+push(disect(patt,input),final),
+for item in patt_sym do final:subst(first(item),last(item),final),
+for item in final do out:append(item,out),out:sublist(out,lambda([x],atom(first(x)))),out)$
+
+/*-----usage------
+ss:pat_lists([_a,_b,[_c,[_d,__e],_q],[_c1,[_d1,_e1,_f1,_w1]]],[A,B,[C,[D,E,F,G],Q],[C1,[D1,E1,F1,G1]]]);
+[[_d1,[D1]],[_e1,[E1]],[_f1,[F1]],[_w1,[G1]],[_d,[D]],[__e,[E,F,G]],[_c1,[C1]],[_c,[C]],[_q,[Q]],[_a,[A]],[_b,[B]]] --*/
+/*----------------------------------------------------------------------------------------*/
+
+/* To get rid of last of every sublist as sublist */
+
+mapss(ss):=block([temp:[],symb],for item in ss do (symb:gensym(),(push([first(item),symb:apply(segment,(last(item)))],temp))),temp)$
+
+/*-----usage------
+kk:mapss(ss);
+[[_b,B],[_a,A],[_q,Q],[_c,C],[_c1,C1],[__e,E,F,G],[_d,D],[_w1,G1],[_f1,F1],[_e1,E1],[_d1,D1]]  -----*/
+/*----------------------------------------------------------------------------------------*/
+
+/*To reformat the list after obtaining patterns from them,*/
+repl(kk,lis):=block([lis:copylist(lis),rep:[],pat_map:[],sym,symb],for item:1 thru length(kk) do 
+         (sym:gensym(),symb:apply(segment,last(kk[item])),
+                  lis:repl_inl(lis,first(kk[item]))),
+              for item in kk do lis:subst(last(item)[1],first(item),lis),lis)$
+			  
+repl_inl(lis,pref):=block([lis:lis],if(listp(lis)) then 
+                    (for item:1 thru length(lis) do 
+                      if(listp(lis[item])) then repl_inl(lis[item],pref) else if(lis[item]=pref) then (lis[item]:symb))
+                      else (if(atom(lis)) then if(lis=pref) then lis:symb),ev(lis))$
+
+/*-----usage------
+lis:[_a,[_c^2,[__e,__e],_q+3],[_c1,[_d1*10,_e1^_e1],_a],__e]; /* new format we want from previous list	*/
+repl(ss,lis); => [A,[C^2,[E,F,G,E,F,G],Q+3],[C1,[10*D1,E1^E1],A],E,F,G]	----*/		  
+/*----------------------------------------------------------------------------------------*/
+
 
