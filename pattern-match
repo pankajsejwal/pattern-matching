@@ -2,10 +2,8 @@
 load(basic);
 /*------------------------------------------------------------------------------------------------------*/
 
-load("C:\\Users\\joker\\Documents\\Maxima-Docs\\segment-old.lsp")$
-/*------------------------------------------------------------------------------------------------------*/
-
 load("C:\\Users\\joker\\Documents\\Maxima-Docs\\segment-new.lisp")$
+/* Get segment from http://www.cs.berkeley.edu/~fateman/lisp/segment-new.lisp    */
 /*------------------------------------------------------------------------------------------------------*/
 
 use_segment(true);
