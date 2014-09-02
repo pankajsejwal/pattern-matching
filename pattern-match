@@ -10,6 +10,7 @@ use_segment(true);
 /*------------------------------------------------------------------------------------------------------*/
 
 load("C:/Users/joker/Documents/Maxima-Docs/positions-trials.mac")$
+/*Refer to the position file and save it as mac or directly run those functions in your worksheet. */
 /*------------------------------------------------------------------------------------------------------*/
 
 listcomplementt(k,l,[n]):=block([],if(n=[]) then map(lambda([x],k:delete(x,k)),[l]) else map(lambda([x],k:delete(x,k,n)),[l]),k)$
