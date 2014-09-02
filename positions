@@ -3,15 +3,19 @@ load(basic);
 
 /*------------------------------------------------------------------------------------------------------*/
 load("C:\\Users\\joker\\Documents\\Maxima-Docs\\segment-new.lisp");
-
+/* Get segment from http://www.cs.berkeley.edu/~fateman/lisp/segment-new.lisp    */
 /*------------------------------------------------------------------------------------------------------*/
 use_segment(true);
 
 /*------------------------------------------------------------------------------------------------------*/
+/* Same as Mathematica's MapIndex API,
+mapindexed([a,b,c,d,[e,[f,g]]]);=> [[a,1],[b,2],[c,3],[d,4],[[e,[f,g]],5]] */
+
 mapindexed(lis):=block([fin:[],count:0],for item in lis do
                    (count:count+1,push([item,count],fin))
                    ,reverse(fin))$
 
+				   
 /*------------------------------------------------------------------------------------------------------*/
 assign_positions(lis):=block([ltemp2:[],count:0],
                     for item in lis do if(listp(item)) then 
@@ -27,6 +31,11 @@ call_from_inside(lis):=block([olast:[],temp:0,final:[],prev,final_f:[]],olast:fr
              push([part(tlist,apply(segment,(last(item)))),last(item)],final_f)),reverse(final_f))$
 
 /*------------------------------------------------------------------------------------------------------*/
+/* Assign positions to all the elements including sublists in a list
+enum_positions([a,b,c,d,[e,[f,g]]]); => 
+[[a,[1]],[b,[2]],[c,[3]],[d,[4]],[[e,[f,g]],[5]],[e,[5,1]],[[f,g],[5,2]],[f,[5,2,1]],[g,[5,2,2]]] */
+
+
 enum_positions(listt):=block([tlist:listt],call_from_inside(assign_positions(listt)))$
 
 /*------------------------------------------------------------------------------------------------------*/
@@ -39,13 +48,7 @@ from_inside(lis):=block([count:0,temps],for item in lis do
  pop(olast))))$
 
 /*------------------------------------------------------------------------------------------------------*/
-atlevel(lis,test,[n]):=block([count:1,li:lis,elem:[]],if n=[] then 
-                (while(reveal(lis,count)#lis) do count:count+1,n:count),
-                for i:1 thru n do (li:apply(append,li),
-                elem:append((sublist(li,test)),elem),
-                li:sublist(li,listp)),[reverse(elem),li])$
 
-/*------------------------------------------------------------------------------------------------------*/
 call_expr_tree(lis):=block([final:[],curr_exp],expr_tree(lis),
                 if(final#[]) then (final:map(lambda([x],[cons(first(first(x)),last(first(x))),last(x)]),final),
                 finalize_list(final))
@@ -55,12 +58,31 @@ call_expr_tree(lis):=block([final:[],curr_exp],expr_tree(lis),
 expr_tree(lis):=block([oper],if(atom(lis)=false) then (oper:op(lis),push([[oper,args(lis)],curr_exp],final),
                   (for i:1 thru length(args(lis)) do (curr_exp:args(lis)[i],expr_tree(args(lis)[i]))))else lis)$
 
-/*------------------------------------------------------------------------------------------------------*/
+/*Usage
+call_expr_tree(a*s^10+cos(w)*tan(q)+10);
+["+",["*",[tan,q],[cos,w]],["*",a,["^",s,10]],10] */
+/*======================================================================================================*/
+/*To get the work done by two APIs above, as suggested by Batron Willis,*/
+call_expr_tree(e) := if mapatom(e) then e else(cons(op(e), map('call_expr_tree,args(e))))$
+
+/*usage
+call_expr_tree(a*s^10+cos(w)*tan(q)+10);
+["+",["*",[tan,q],[cos,w]],["*",a,["^",s,10]],10] */
+
+
+/*=====================================================================================================*/
 finalize_list(tt):=block(for item:1 thru length(tt) do ( 
       for i:1 thru length(tt) do ( 
           for j:1 thru length(first(tt[i])) do ( 
             if(last(tt[item])=first(tt[i])[j]) then 
                     first(tt[i])[j]:tt[item][1]))),first(last(tt)))$
+
+/*------------------------------------------------------------------------------------------------------*/
+
+positionsof(elem,lis):=sublist(enum_positions(lis),lambda([x],first(x)=elem))$
+
+/*usage
+positionsof(f,[a,b,c,d,[e,[f,g]]]); => [[f,[5,2,1]]]   */
 
 /*------------------------------------------------------------------------------------------------------*/
 assign_positions_expr(lis):=block([ltemp2:[],count:-1],
@@ -94,17 +116,11 @@ from_inside_expr(lis):=block([count:0],for item in lis do
 positions_expr(expr):=block([tlist:expr,temp],temp:call_expr_tree(expr),
                       temp:call_from_inside_expr(assign_positions_expr(temp)),
                       temp)$
-
+					  
+/*usage
+positions_expr(a*s^10+cos(w)*tan(q)+10);
+[["+",[0]],[tan(q)*cos(w),[1]],["*",[1,0]],[tan(q),[1,1]],[tan,[1,1,0]],[q,[1,1,1]],[cos(w),[1,2]],[cos,[1,2,0]],[w,[1,2,1]],[a*s^10,[2]],["*",[2,0
+]],[a,[2,1]],[s^10,[2,2]],["^",[2,2,0]],[s,[2,2,1]],[10,[2,2,2]],[10,[3]]]    */					  
 /*------------------------------------------------------------------------------------------------------*/
-call_analyse(lis):=block([lis:copy(lis),temp:[],backup:[]],temp:analyse(lis),
-                 for item in backup do
-                 lis:ratsubst(first(item),last(item),lis),lis)$
 
-/*------------------------------------------------------------------------------------------------------*/
-analyse(lis):=block([lis:lis],for item in lis do (if(listp(item)) then 
-              analyse(item) elseif(atom(item)=false) then 
-                 push([call_expr_tree(item),item],backup)),lis)$
-
-/*------------------------------------------------------------------------------------------------------*/
-positionsof(elem,lis):=sublist(enum_positions(lis),lambda([x],first(x)=elem))$
 
