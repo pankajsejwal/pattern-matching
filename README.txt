@@ -53,7 +53,7 @@ If someone tries and faces any problem, I would be glad to interact with them an
 
 For detailed explaination:
 
-https://drive.google.com/file/d/0B36DQjLI_-hxek5zX3V3MHMzLXc/edit?usp=sharing
+https://www.academia.edu/8315769/Mathematica_style_pattern_matching_without_using_function_closures
 
 
 
